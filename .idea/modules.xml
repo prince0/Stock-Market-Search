@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/StockMarketSearch.iml" filepath="$PROJECT_DIR$/StockMarketSearch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Stock-Market-Search.iml" filepath="$PROJECT_DIR$/Stock-Market-Search.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

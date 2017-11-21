@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Stock Market Search</string>
+    <string name="get_quote">Get Quote</string>
+    <string name="clear">Clear</string>
+    <string name="favourites">Favourites</string>
+    <string name="auto_refresh">Auto Refresh</string>
 </resources>
