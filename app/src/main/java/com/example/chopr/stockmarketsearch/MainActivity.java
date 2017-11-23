@@ -47,8 +47,6 @@ public class MainActivity extends Activity {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
 
-
-
                 return false;
             }
         });
