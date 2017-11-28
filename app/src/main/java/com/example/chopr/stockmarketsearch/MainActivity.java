@@ -1,14 +1,34 @@
 package com.example.chopr.stockmarketsearch;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +42,6 @@ import butterknife.OnClick;
  */
 public class MainActivity extends Activity {
 
-
     @BindView(R.id.autoComplete)
     AutoCompleteTextView autoCompleteTextView;
 
@@ -32,22 +51,53 @@ public class MainActivity extends Activity {
     @BindView(R.id.spinnerSortBy)
     Spinner spinnerSortBy;
 
+    @BindView(R.id.progress_autocomplete)
+    ProgressBar progressBar;
+
+    RequestQueue requestQueue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_dropdown_item_1line, COUNTRIES);
 
-        autoCompleteTextView.setAdapter(adapter);
         autoCompleteTextView.setThreshold(1);
-        autoCompleteTextView.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
 
-                return false;
+        requestQueue = Volley.newRequestQueue(getApplicationContext());
+
+        autoCompleteTextView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int i, int i1, int i2) {
+                progressBar.setVisibility(View.VISIBLE);
+                if (s.length() != 0) {
+                    if (autoCompleteTextView.getText().toString().trim().length() != 0) {
+                        jsonRequest(autoCompleteTextView.getText().toString());
+                    } else autoCompleteTextView.dismissDropDown();
+                } else autoCompleteTextView.dismissDropDown();
+//                progressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (autoCompleteTextView.getText().toString().trim().length() == 0) {
+                    autoCompleteTextView.dismissDropDown();
+                    progressBar.setVisibility(View.GONE);
+                }
+            }
+        });
+
+        autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                progressBar.setVisibility(View.GONE);
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(autoCompleteTextView.getWindowToken(), 0);
             }
         });
 
@@ -75,29 +125,81 @@ public class MainActivity extends Activity {
         sortByAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         orderByAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // attaching data adapter to spinner
+
+        spinnerOrderBy.setPrompt("Hello");
         spinnerSortBy.setAdapter(sortByAdapter);
         spinnerOrderBy.setAdapter(orderByAdapter);
 
 
     }
 
-
     @OnClick(R.id.getQuoteTextView)
     public void getQuote() {
         if (autoCompleteTextView.getText().toString().trim().length() == 0) {
             Toast.makeText(getApplicationContext(), "Please enter a stock name or symbol", Toast.LENGTH_SHORT).show();
         } else {
+            String temp = autoCompleteTextView.getText().toString();
             Toast.makeText(getApplicationContext(), "Get Quote Clicked", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, StockDetail.class);
+            intent.putExtra("StockName", temp.substring(0, temp.indexOf("-")-1));
+            startActivity(intent);
         }
     }
 
     @OnClick(R.id.clearTextView)
     public void clear() {
         Toast.makeText(getApplicationContext(), "Clear Clicked", Toast.LENGTH_SHORT).show();
+        autoCompleteTextView.setText("");
     }
 
-    private static String[] COUNTRIES = new String[]{
-            "Belgium", "France", "Italy", "Germany", "Spain"
-    };
+    public void getDataFromServer() {
+
+    }
+
+    public void jsonRequest(String symbol) {
+        autoCompleteTextView.dismissDropDown();
+        progressBar.setVisibility(View.VISIBLE);
+        if (symbol.contains("-")) {
+            progressBar.setVisibility(View.GONE);
+            autoCompleteTextView.dismissDropDown();
+            return;
+        }
+        String url = "http://pchw8-env.us-west-1.elasticbeanstalk.com/lookup/" + symbol;
+        JsonArrayRequest jsObjRequest = new JsonArrayRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
+
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        try {
+
+                            String[] altArray = new String[Math.min(5, response.length())];
+                            int len = altArray.length;
+
+                            for (int i = 0; i < len; i++) {
+                                JSONObject temp = response.getJSONObject(i);
+                                altArray[i] = temp.getString("Symbol") + " - " + temp.getString("Name") + " (" + temp.getString("Exchange") + ")";
+                            }
+                            final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,
+                                    android.R.layout.simple_dropdown_item_1line, altArray);
+                            progressBar.setVisibility(View.GONE);
+                            autoCompleteTextView.setAdapter(adapter);
+                            autoCompleteTextView.showDropDown();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO Auto-generated method stub
+                        Log.e("error", error.toString());
+                        autoCompleteTextView.dismissDropDown();
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
+
+        requestQueue.add(jsObjRequest);
+    }
 
 }

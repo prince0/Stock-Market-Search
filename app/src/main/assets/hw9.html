@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+      <script src="https://code.highcharts.com/stock/highstock.js"></script>
+      <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+      <script src="https://code.highcharts.com/modules/exporting.js"></script>
+</head>
+<body>
+    <div id ="chartDiv" ></div>
+    <script type="text/javascript">
+    var value;
+    $( document ).ready(function() {
+        
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        var type = url.searchParams.get("type");
+         value = url.searchParams.get("symbol");
+        if(type=="historical"){
+            $.ajax({
+            url : "http://shrushtpwebtechhw8-env.us-east-2.elasticbeanstalk.com/highstockip/"+value+"?symbol="+value,
+            dataType : "json",
+            success : function(data)
+            {
+
+              window.hidata = data;
+              drawHistoricalChart(hidata,value);
+            }
+
+          });
+        } else{
+            getquotedata(value, type);
+        }
+    });
+
+    function getAttributeByIndex(obj, index){
+        var i = 0;
+        for (var attr in obj){
+            if (index === i){
+                return obj[attr];
+            }
+            i++;
+        }
+        return null;
+    }
+
+
+    function getquotedata(symboldata, type) {
+      var URL = "http://shrushtpwebtechhw8-env.us-east-2.elasticbeanstalk.com/?symbol="+symboldata+"&type="+type;
+      var responsedata='';
+      $.ajax(
+      {
+
+        type : 'GET',
+        url : URL,
+        dataType : "json",
+        success : function(data)
+        {          
+            tempdata=data;
+            $('#next').removeClass("disabled");
+            $('#next').prop("disabled", false);
+            console.log(data);
+            if(type=="Price"){
+              displayPriceChart(type,data);
+            } else if(type=="STOCH"){
+              displaySTOCHChart(type,data);
+            } else if(type=="BBANDS"){
+              displayBBANDSChart(type,data);
+            } else if(type=="MACD"){
+               displayMACDChart(type,data);
+            } else {
+              displayOtherChart(type,data);
+            }                  
+            
+
+          }
+       });                                                                              
+     }
+
+       function displayPriceChart(type,data){
+       if(!data.hasOwnProperty('Meta Data') || data.toString().indexOf("Error") >-1) {
+        $("#"+type).addClass('error');
+        $("#"+type).html( "Error! Failed to get "+type+" data.");
+      } else {
+        $("#"+type).removeClass('error');
+       var inputDatePrice = Date.now() - 24 * 3600000 * 99;
+        var obj1 = data['Time Series (Daily)'];
+        var closeArray = [];
+        var volumeArray = [];
+        for(var i = 0; i < 100; i++){
+            closeArray.push(getAttributeByIndex(obj1,i)['4. close']);
+            volumeArray.push(Number(getAttributeByIndex(obj1,i)['5. volume'])/1000000);
+        }
+        closeArray = closeArray.map(Number);
+        volumeArray = volumeArray.map(Number);
+        closeArray.reverse();
+        volumeArray.reverse();
+       Highcharts.chart(type, {
+            chart: {
+                borderColor: '#d8d8d8',
+                borderWidth: 1
+            },
+            title: {
+                text: value + " Stock Price and Volume"
+            },
+            subtitle: {
+                useHTML: true,
+              text: "<a href ='https://www.alphavantage.co' target='_blank'>Source: Alpha Vantage</a>"
+            },
+            tooltip:{
+                valueDecimals: 2,
+                xDateFormat: '%m/%d'
+            },
+            xAxis : [{
+                type: 'datetime',
+                labels: {
+                    format: '{value:%m/%d}'
+                },
+                tickInterval: 5
+            }],
+            yAxis: [{
+                title: {
+                    text: 'Stock Price'
+                },
+                tickInterval: 50
+            },{
+                labels: {
+                    format: '{value}M'
+                },
+                title: {
+                    text: 'Volume'
+                },
+                opposite: true,
+                tickInterval: 20
+            }],
+            series: [{
+                type: 'area',
+                name: 'Price',
+                pointInterval: 24 * 3600000,
+                lineColor: 'blue',
+                tooltip: {
+                    valueDecimals: 2,
+                },
+                marker: {
+                    enabled: false,
+                    fillColor: 'blue'
+                },
+                pointStart: inputDatePrice,
+                data: closeArray
+            }, {
+                type: 'column',
+                yAxis: 1,
+                name: 'Volume',
+                color: 'red',
+                pointInterval: 24 * 3600000,
+                pointStart: inputDatePrice,
+                data: volumeArray,
+                tooltip: {
+                    valueSuffix: 'M'
+                }
+            }]
+        });
+     }
+    }
+
+    function displayBBANDSChart(type, data) {
+      if(!data.hasOwnProperty('Meta Data') || data.toString().indexOf("Error") >-1) {
+        $("#chartDiv").addClass('error');
+        $("#chartDiv").html( "Error! Failed to get "+type+" data.");
+      } else {
+        $("#chartDiv").removeClass('error');
+        var middle = [];
+        var lower = [];
+        var date = [];
+        var i = 0;
+        var upper = [];
+        for(var key in data["Technical Analysis: " + type]){
+                var numOfDate = key.split(" ");
+                numOfDate = numOfDate[0].split("-");
+                date[i] = numOfDate[1] + "/" + numOfDate[2];
+                var value = parseFloat(data["Technical Analysis: " + type][key]["Real Middle Band"]);
+                middle[i] = value;
+                var value = parseFloat(data["Technical Analysis: " + type][key]["Real Lower Band"]);
+                lower[i] = value;
+                var value = parseFloat(data["Technical Analysis: " + type][key]["Real Upper Band"]);
+                upper[i] = value;
+                i++;
+            }
+            date = date.slice(0, 121);
+            middle = middle.slice(0, 121);
+            lower = lower.slice(0, 121);
+            upper = upper.slice(0, 121);
+            Highcharts.chart("chartDiv", {
+                chart: {    
+                    zoomType: 'x',                                   
+                    borderColor: '#D1D0CE',
+                    borderWidth: 1,
+                    height:400
+                },
+                title: {
+                    text: data["Meta Data"]["2: Indicator"]
+                },
+                subtitle: {
+                    useHTML: true,
+                    text: "<a href = 'https://www.alphavantage.co' target='_blank'>Source: Alpha Vantage</a>"
+                },
+                xAxis: [{
+                    reversed: true,
+                    tickInterval: 5,
+                    categories:  date
+                }],
+                yAxis: [{ 
+                    title: {
+                        text: type
+                    }
+                }],               
+                series: [{
+                    name: data["Meta Data"]["1: Symbol"] + " Real Middle Band",
+                    data:  middle,
+                    color: '#3BBAFF'
+                }, {
+                    name: data["Meta Data"]["1: Symbol"] + " Real Upper Band",
+                    data:  upper,
+                    color:'#000001',
+                }, {
+                    name: data["Meta Data"]["1: Symbol"] + " Real Lower Band",
+                    data:  lower,
+                    color:'#FF0001'
+                }]
+            });
+
+        }                 
+    }
+
+    function displaySTOCHChart(type, data){
+      if(!data.hasOwnProperty('Meta Data') || data.toString().indexOf("Error") >-1) {
+        $("#chartDiv").addClass('error');
+        $("#chartDiv").html( "Error! Failed to get "+type+" data.");
+      } else {
+        $("#chartDiv").removeClass('error');
+          var slowK = [];
+          var slowD = [];
+          var date = [];
+          var i = 0;
+          for(var key in data["Technical Analysis: " + type]){
+                  var numOfDate = key.split(" ");
+                  numOfDate = numOfDate[0].split("-");
+                  date[i] = numOfDate[1] + "/" + numOfDate[2];
+                  var value = parseFloat(data["Technical Analysis: " + type][key]["SlowK"]);
+                  slowK[i] = value;
+                  value = parseFloat(data["Technical Analysis: " + type][key]["SlowD"]);
+                  slowD[i] = value;
+                  i++;
+              }
+              date = date.slice(0, 121);
+              slowK = slowK.slice(0, 121);
+              slowD = slowD.slice(0, 121);
+              Highcharts.chart("chartDiv", {
+                  chart: {   
+                      zoomType: 'x',                                     
+                      borderColor: '#D1D1CE',
+                      borderWidth: 1,
+                      height:400
+                  },
+                  title: {
+                      text: data["Meta Data"]["2: Indicator"]
+                  },
+                  subtitle: {
+                      useHTML: true,
+                      text: "<a href = 'https://www.alphavantage.co' target='_blank'>Source: Alpha Vantage</a>"
+                  },
+                  xAxis: [{
+                      reversed: true,
+                      tickInterval: 5,
+                      categories:  date
+                  }],
+                  yAxis: [{ 
+                      title: {
+                          text: type
+                      },
+                      tickInterval:10
+                  }],                  
+                  series: [{
+                      name: data["Meta Data"]["1: Symbol"] + " SlowK",
+                      data:  slowK,
+                      color: '#3BBAFF',
+                      marker: {
+                          symbol: "square"
+                      }
+                  }, {
+                      name: data["Meta Data"]["1: Symbol"] + " SlowD",
+                      data:  slowD,
+                      color: '#FF0001',
+                      marker: {
+                          symbol: "circle"
+                      }
+                  }]
+              });
+          }
+    }
+
+    function displayMACDChart(type,data){
+      if(!data.hasOwnProperty('Meta Data') || data.toString().indexOf("Error") >-1) {
+        $("#chartDiv").addClass('error');
+        $("#chartDiv").html( "Error! Failed to get "+type+" data.");
+      } else {
+        $("#chartDiv").removeClass('error');
+          var hist = [];
+          var signal = [];
+          var macd = [];
+          var date = [];
+          var i = 0;
+          for(var key in data["Technical Analysis: " + type]){
+                  var numOfDate = key.split(" ");
+                  numOfDate = numOfDate[0].split("-");
+                  date[i] = numOfDate[1] + "/" + numOfDate[2];
+                  var value = parseFloat(data["Technical Analysis: " + type][key]["MACD_Hist"]);
+                  hist[i] = value;
+                  value = parseFloat(data["Technical Analysis: " + type][key]["MACD_Signal"]);
+                  signal[i] = value;
+                  value = parseFloat(data["Technical Analysis: " + type][key]["MACD"]);
+                  macd[i] = value;
+                  i++;
+              }
+              date = date.slice(0, 121);
+              hist = hist.slice(0, 121);
+              signal = signal.slice(0, 121);
+              macd = macd.slice(0, 121);
+              Highcharts.chart("chartDiv", {
+                  chart: {   
+                      zoomType: 'x',                                    
+                      borderColor: '#D1D0CE',
+                      borderWidth: 1,
+                      height:400
+                  },
+                  title: {
+                      text: data["Meta Data"]["2: Indicator"]
+                  },
+                  subtitle: {
+                      useHTML: true,
+                      text: "<a href = 'https://www.alphavantage.co' target='_blank'>Source: Alpha Vantage</a>"
+                  },
+                  xAxis: [{
+                      reversed: true,
+                      tickInterval: 5,
+                      categories:  date
+                  }],
+                  yAxis: [{ 
+                      title: {
+                          text: type
+                      }
+                  }],                
+                  series: [{
+                      name: data["Meta Data"]["1: Symbol"] + " MACD",
+                      data:  macd,
+                      color: '#E8A327'
+                  }, {
+                      name: data["Meta Data"]["1: Symbol"] + " MACD_Hist",
+                      data:  hist,
+                      color: '#3BBAFF'
+                  }, {
+                      name: data["Meta Data"]["1: Symbol"] + " MACD_Signal",
+                      data:  signal,
+                      color: '#FF0001'
+                  }]
+              })
+            }
+    }
+
+    function displayOtherChart(type,data) {
+        if(!data.hasOwnProperty('Meta Data') || data.toString().indexOf("Error") >-1) {
+        $("#chartDiv").addClass('error');
+        $("#chartDiv").html( "Error! Failed to get "+type+" data.");
+      } else {
+        $("#chartDiv").removeClass('error');
+            var results = [];
+            var date = [];
+            var i = 0;
+            for(var key in data["Technical Analysis: " + type]){
+                var numOfDate = key.split(" ");
+                numOfDate = numOfDate[0].split("-");
+                date[i] = numOfDate[1] + "/" + numOfDate[2];
+                var value = parseFloat(data["Technical Analysis: " + type][key][type]);
+                results[i] = value;
+                i++;
+            }
+            date = date.slice(0, 121);
+            results = results.slice(0, 121);
+            Highcharts.chart("chartDiv", {
+                    chart: {     
+                        zoomType: 'x',                                       
+                        borderColor: '#D1D0CE',
+                        borderWidth: 1,
+                        height:400
+                    },
+                    title: {
+                        text: data["Meta Data"]["2: Indicator"]
+                    },
+                    subtitle: {
+                        useHTML: true,
+                        text: "<a href = 'https://www.alphavantage.co' target='_blank'>Source: Alpha Vantage</a>"
+                    },
+                    xAxis: [{
+                        reversed: true,
+                        tickInterval: 5,
+                        categories:  date
+                    }],
+                    yAxis: [{ 
+                        title: {
+                            text: type
+                        }
+                    }],                
+                    series: [{
+                        name: data["Meta Data"]["1: Symbol"],
+                        data:  results
+                    }]
+                });
+          }
+    }
+
+    function displayPriceChart(type,data){
+       if(!data.hasOwnProperty('Meta Data') || data.toString().indexOf("Error") >-1) {
+        $("#chartDiv").addClass('error');
+        $("#chartDiv").html( "Error! Failed to get "+type+" data.");
+      } else {
+        $("#chartDiv").removeClass('error');
+       var inputDatePrice = Date.now() - 24 * 3600000 * 99;
+        var obj1 = data['Time Series (Daily)'];
+        var closeArray = [];
+        var volumeArray = [];
+        for(var i = 0; i < 100; i++){
+            closeArray.push(getAttributeByIndex(obj1,i)['4. close']);
+            volumeArray.push(Number(getAttributeByIndex(obj1,i)['5. volume'])/1000000);
+        }
+        closeArray = closeArray.map(Number);
+        volumeArray = volumeArray.map(Number);
+        closeArray.reverse();
+        volumeArray.reverse();
+       Highcharts.chart("chartDiv", {
+            chart: {
+                borderColor: '#d8d8d8',
+                borderWidth: 1
+            },
+            title: {
+                text: value + " Stock Price and Volume"
+            },
+            subtitle: {
+                useHTML: true,
+              text: "<a href ='https://www.alphavantage.co' target='_blank'>Source: Alpha Vantage</a>"
+            },
+            tooltip:{
+                valueDecimals: 2,
+                xDateFormat: '%m/%d'
+            },
+            xAxis : [{
+                type: 'datetime',
+                labels: {
+                    format: '{value:%m/%d}'
+                },
+                tickInterval: 5
+            }],
+            yAxis: [{
+                title: {
+                    text: 'Stock Price'
+                },
+                tickInterval: 50
+            },{
+                labels: {
+                    format: '{value}M'
+                },
+                title: {
+                    text: 'Volume'
+                },
+                opposite: true,
+                tickInterval: 20
+            }],
+            series: [{
+                type: 'area',
+                name: 'Price',
+                pointInterval: 24 * 3600000,
+                lineColor: 'blue',
+                tooltip: {
+                    valueDecimals: 2,
+                },
+                marker: {
+                    enabled: false,
+                    fillColor: 'blue'
+                },
+                pointStart: inputDatePrice,
+                data: closeArray
+            }, {
+                type: 'column',
+                yAxis: 1,
+                name: 'Volume',
+                color: 'red',
+                pointInterval: 24 * 3600000,
+                pointStart: inputDatePrice,
+                data: volumeArray,
+                tooltip: {
+                    valueSuffix: 'M'
+                }
+            }]
+        });
+     }
+    }
+
+    function drawHistoricalChart (data, symbol) {
+      if(!data.hasOwnProperty('Dates') || data.toString().indexOf("Error") >-1) {
+        $("#chartDiv").addClass('error');
+        $("#chartDiv").html( "Error! Failed to get historical charts data.");
+      } else {
+        $("#chartDiv").removeClass('error');
+      
+        var fixDate = function(dateIn) {
+          var dat = new Date(dateIn);
+          return Date.UTC(dat.getFullYear(), dat.getMonth(), dat.getDate());
+        };
+
+        var getOHLC = function(historical) {
+          var dates = historical.Dates || [];
+              var elements = historical.Elements || [];
+              var chartSeries = [];
+
+              if (elements[0]) {
+
+                  for (var i = 0, datLen = dates.length; i < datLen; i++) {
+
+                      var dat = fixDate(dates[i]);
+                      var pointData = [
+                          dat,
+                          elements[0].DataSeries['open'].values[i],
+                          elements[0].DataSeries['high'].values[i],
+                          elements[0].DataSeries['low'].values[i],
+                          elements[0].DataSeries['close'].values[i]
+                      ];
+                      chartSeries.push(pointData);
+                  };
+              }
+
+              return chartSeries;
+        };
+
+        var series = getOHLC(data);
+        //display series
+        $('#chartDiv').highcharts('StockChart', {
+          title: {
+            text: symbol + ' ' + 'Stock Value'
+          },
+          subtitle: {
+            useHTML: true,
+            text: '<a href="https://www.alphavantage.co/" target="_blank">Source: Alpha Vantage</a>'
+          },
+          xAxis: {
+            type: 'datetime'
+          },
+          yAxis: [{
+            min: 0,
+            title: {
+              text: 'Stock Value'
+            }
+          }],
+           tooltip: {
+                    crosshairs: [false,false],
+                    split: false
+                },
+          series: [{
+            name: symbol,
+            data: series,
+            type: 'area',
+            threshold: null,
+            tooltip: {
+              valueDecimals: 2,
+              valuePrefix: '$',
+            }
+          }],
+          rangeSelector: {
+            buttons: [{
+              type: 'week',
+              count: 1,
+              text: '1w'
+            }, {
+              type: 'month',
+              count: 1,
+              text: '1m'
+            }, {
+              type: 'month',
+              count: 3,
+              text: '3m'
+            }, {
+              type: 'month',
+              count: 6,
+              text: '6m'
+            }, {
+              type: 'ytd',
+              text: 'YTD'
+            }, {
+              type: 'year',
+              count: 1,
+              text: '1y'
+            }, {
+              type: 'all',
+              text: 'All'
+            }],
+            selected: 0,
+            //inputEnabled : false
+          },
+
+        });  
+      }
+    }
+
+
+
+    </script>
+</body>
+</html>
+
+            
+            
+                    
