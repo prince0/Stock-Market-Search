@@ -1,0 +1,24 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraintLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.chopr.stockmarketsearch.StockDetail">
+
+    <WebView
+        android:id="@+id/web_view_historical"
+        android:layout_width="match_parent"
+        android:layout_height="500dp" />
+
+    <TextView
+        android:id="@+id/text_view_error_historical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/size_200"
+        android:gravity="center"
+        android:text="@string/failed_to_load_data"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/font_25"
+        android:visibility="invisible" />
+
+</RelativeLayout>
