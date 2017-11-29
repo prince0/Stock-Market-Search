@@ -28,11 +28,12 @@
                 android:indeterminateTintMode="src_atop" />
 
             <TextView
+                android:id="@+id/text_view_error"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="@dimen/size_200"
-                android:text="Failed to Load Data"
+                android:text="@string/failed_to_load_data"
                 android:textColor="@android:color/black"
                 android:textSize="@dimen/font_25"
                 android:visibility="invisible" />
@@ -46,6 +47,14 @@
                 android:textColor="@android:color/black"
                 android:textSize="@dimen/font_28" />
 
+            <ToggleButton
+                android:id="@+id/favourite_toggle_button"
+                android:layout_width="@dimen/size_50"
+                android:layout_height="wrap_content"
+                android:textOff=""
+                android:textOn=""
+                android:background="@drawable/favourite_check"
+                android:layout_alignParentEnd="true"/>
 
             <TableLayout
                 android:id="@+id/table_layout_stock_table"
@@ -59,7 +68,7 @@
                         android:layout_column="1"
                         android:text="Stock Symbol"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -68,7 +77,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -84,7 +93,7 @@
                         android:layout_column="1"
                         android:text="Last Price"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -93,7 +102,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -109,7 +118,7 @@
                         android:layout_column="1"
                         android:text="Change"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -118,7 +127,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
 
                     <ImageView
                         android:layout_width="26dp"
@@ -140,7 +149,7 @@
                         android:layout_column="1"
                         android:text="Timestamp"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -149,7 +158,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -165,7 +174,7 @@
                         android:layout_column="1"
                         android:text="Open"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -174,7 +183,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -190,7 +199,7 @@
                         android:layout_column="1"
                         android:text="Close"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -199,7 +208,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -215,7 +224,7 @@
                         android:layout_column="1"
                         android:text="Day's Range"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -224,7 +233,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -240,7 +249,7 @@
                         android:layout_column="1"
                         android:text="Volume"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/font_20"
+                        android:textSize="@dimen/font_16"
                         android:textStyle="bold" />
 
                     <TextView
@@ -249,7 +258,7 @@
                         android:layout_marginLeft="@dimen/size_20"
                         android:text="1234"
                         android:textColor="@android:color/black"
-                        android:textSize="@dimen/size_20" />
+                        android:textSize="@dimen/font_16" />
                 </TableRow>
 
                 <View
@@ -300,6 +309,6 @@
         <WebView
             android:id="@+id/web_view_chart"
             android:layout_width="match_parent"
-            android:layout_height="500dp" />
+            android:layout_height="470dp" />
     </LinearLayout>
 </ScrollView>

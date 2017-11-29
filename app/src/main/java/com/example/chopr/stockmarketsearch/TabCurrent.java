@@ -4,9 +4,11 @@ package com.example.chopr.stockmarketsearch;
  * Created by chopr on 11/25/2017.
  */
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.LayerDrawable;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,12 +18,14 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -30,11 +34,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -48,7 +55,7 @@ public class TabCurrent extends Fragment {
     private String urlJsonArry2 = "&type=";
     Iterator<String> iterator;
     String url = "http://www-scf.usc.edu/~princec/HW9.html?type=";
-    String tempChartType="Price";
+    String tempChartType = "Price";
     String symbol;
 
     @BindView(R.id.progress_current)
@@ -65,6 +72,36 @@ public class TabCurrent extends Fragment {
 
     @BindView(R.id.text_view_change_chart)
     TextView changeChartTextView;
+
+    @BindView(R.id.text_view_error)
+    TextView errorTextView;
+
+    @BindView(R.id.favourite_toggle_button)
+    ToggleButton favouriteButton;
+
+    @BindView(R.id.text_view_stock_symbol)
+    TextView stockSymbolTextView;
+
+    @BindView(R.id.text_view_last_price)
+    TextView lastPriceTextView;
+
+    @BindView(R.id.text_view_change)
+    TextView changeTextView;
+
+    @BindView(R.id.text_view_timestamp)
+    TextView timestampTextView;
+
+    @BindView(R.id.text_view_open)
+    TextView openTextView;
+
+    @BindView(R.id.text_view_close)
+    TextView closeTextView;
+
+    @BindView(R.id.text_view_days_range)
+    TextView daysRangeTextView;
+
+    @BindView(R.id.text_view_volume)
+    TextView volumeTextView;
 
 
     @Override
@@ -140,6 +177,21 @@ public class TabCurrent extends Fragment {
         return rootView;
     }
 
+    public void saveHashMap(String key, Object obj) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(obj);
+        editor.putString(key, json);
+        editor.apply();     // This line is IMPORTANT !!!
+    }
+
+    @OnClick(R.id.favourite_toggle_button)
+    public void favouriteButtonClick() {
+        if (favouriteButton.isChecked()) {
+            saveHashMap(symbol, new HashMap<String, HashMap<String, String>>());
+        }
+    }
 
     @OnClick(R.id.text_view_change_chart)
     public void changeClick() {
@@ -150,7 +202,7 @@ public class TabCurrent extends Fragment {
     }
 
     private void getJSONStockDetails() {
-        Log.e("url dekho", urlJsonArry1);
+//        Log.e("url dekho", urlJsonArry1);
 
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, urlJsonArry1, null,
                 new Response.Listener<JSONObject>() {
@@ -159,7 +211,48 @@ public class TabCurrent extends Fragment {
                         Log.d("error hai", response.toString());
 
                         try {
-                            iterator = response.getJSONObject("Time Series (Daily)").keys();
+                            if (response.has("Error Message")) {
+                                errorTextView.setVisibility(View.VISIBLE);
+                            } else {
+                                errorTextView.setVisibility(View.INVISIBLE);
+                                iterator = response.getJSONObject("Time Series (Daily)").keys();
+
+                                JSONObject currentObject = response.getJSONObject("Time Series (Daily)").getJSONObject(iterator.next());
+                                JSONObject pastObject = response.getJSONObject("Time Series (Daily)").getJSONObject(iterator.next());
+                                Log.e("close value", currentObject.get("4. close").toString());
+
+
+                                stockSymbolTextView.setText(symbol);
+
+                                double currentPrice = Math.round(Float.parseFloat(currentObject.get("4. close").toString()) * 100.0) / 100.0;
+                                lastPriceTextView.setText(""+currentPrice);
+
+                                double pastPrice = Math.round(Float.parseFloat(pastObject.get("4. close").toString()) * 100.0) / 100.0;
+
+                                double change = Math.round((currentPrice-pastPrice) * 100.0) / 100.0;
+                                double percent = Math.round((change/pastPrice*100) * 100.0) / 100.0;
+
+                                changeTextView.setText(change+" ("+percent+"%)");
+
+                                String date = response.getJSONObject("Meta Data").getString("3. Last Refreshed");
+                                if (date.length()<=12) date = date + " 16:00:00";
+
+                                timestampTextView.setText(date + " EDT");
+
+                                double openValue = Math.round(Float.parseFloat(currentObject.get("1. open").toString()) * 100.0) / 100.0;
+                                double closeValue = Math.round(Float.parseFloat(currentObject.get("4. close").toString()) * 100.0) / 100.0;
+                                double lowValue = Math.round(Float.parseFloat(currentObject.get("3. low").toString()) * 100.0) / 100.0;
+                                double highValue = Math.round(Float.parseFloat(currentObject.get("2. high").toString()) * 100.0) / 100.0;
+
+                                openTextView.setText(openValue+"");
+                                closeTextView.setText(""+closeValue);
+                                daysRangeTextView.setText(lowValue+" - "+ highValue);
+
+                                volumeTextView.setText(currentObject.get("5. volume").toString());
+
+
+                                tableLayout.setVisibility(View.VISIBLE);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -186,11 +279,8 @@ public class TabCurrent extends Fragment {
 //
 //                            }
 
-                        Log.e("Next Log", iterator.next());
-
 
                         progressBar.setVisibility(View.INVISIBLE);
-                        tableLayout.setVisibility(View.VISIBLE);
 
                     }
                 }, new Response.ErrorListener() {
@@ -199,7 +289,8 @@ public class TabCurrent extends Fragment {
                 VolleyLog.d("error", "Error: " + error.getMessage());
                 Toast.makeText(getActivity(),
                         error.getMessage(), Toast.LENGTH_SHORT).show();
-
+                errorTextView.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.INVISIBLE);
             }
         });
 

@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 progressBar.setVisibility(View.GONE);
-                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(autoCompleteTextView.getWindowToken(), 0);
             }
         });
@@ -141,7 +141,7 @@ public class MainActivity extends Activity {
             String temp = autoCompleteTextView.getText().toString();
             Toast.makeText(getApplicationContext(), "Get Quote Clicked", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, StockDetail.class);
-            intent.putExtra("StockName", temp.substring(0, temp.indexOf("-")-1));
+            intent.putExtra("StockName", temp.substring(0, temp.contains("-") ? temp.indexOf("-") - 1 : temp.length()));
             startActivity(intent);
         }
     }
