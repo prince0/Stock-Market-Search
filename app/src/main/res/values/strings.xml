@@ -10,6 +10,7 @@
     <string name="tab_text_1">CURRENT</string>
     <string name="tab_text_2">HISTORICAL</string>
     <string name="tab_text_3">NEWS</string>
+    <string name="facebook_app_id">561717247503151</string>
     <string name="stock_details">Stock Details</string>
     <string name="failed_to_load_data">Failed to Load Data</string>
 </resources>
