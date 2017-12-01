@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/text_view_favourite_symbol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="left"
+        android:padding="@dimen/size_15"
+        android:text="SYMBOL"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/font_20" />
+
+    <TextView
+        android:id="@+id/text_view_favourite_price"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:gravity="left"
+        android:padding="@dimen/size_15"
+        android:text="Price"
+        android:layout_marginLeft="@dimen/size_100"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/font_20" />
+
+    <TextView
+        android:id="@+id/text_view_favourite_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:gravity="right"
+        android:layout_alignParentRight="true"
+        android:padding="@dimen/size_15"
+        android:paddingRight="@dimen/size_10"
+        android:text="CHANGE"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/font_20" />
+
+</RelativeLayout>
